@@ -42,11 +42,13 @@ async function syncLogs() {
 
     // Creates a clean date string like "2026-02-23T00:00:00+00:00" for Hikvision
     const todayClean = new Date(new Date().setHours(0, 0, 0, 0)).toISOString().split('.')[0] + '+00:00';
+    const todayEnd = new Date(new Date().setHours(23, 59, 59, 999)).toISOString().split('.')[0] + '+00:00';
 
     const payload = {
         AcsEventCond: {
             searchID: "1", searchResultPosition: 0, maxResults: 30, major: 0, minor: 0,
-            startTime: todayClean
+            startTime: todayClean,
+            endTime: todayEnd
         }
     };
 
@@ -94,7 +96,7 @@ async function startAgent() {
 
     // Fetch logs immediately, then every 10 seconds
     syncLogs();
-    setInterval(syncLogs, 10000);
+    // setInterval(syncLogs, 10000);
 
     // Re-sync the employee list every 1 hour (in case you add new people)
     setInterval(updateEmployeeMap, 3600000);
