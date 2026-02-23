@@ -3,7 +3,7 @@ const { request } = require('urllib');
 
 // CONFIGURATION
 const DEVICE_CONFIG = {
-    ip: 'http://192.168.10.42', // Replace with your Device IP
+    ip: 'http://192.0.0.64', // Replace with your Device IP
     user: 'admin',
     pass: '!Palma12345678'  // Replace with your password
 };
@@ -24,7 +24,10 @@ async function syncLogs() {
             major: 0,
             minor: 0,
             // Grabs logs from the start of today
-            startTime: "2024-01-01T00:00:00+00:00"
+            startTime: "2024-02-24T00:00:00+00:00",
+            // endTime: "2024-02-23T23:59:59+00:00",
+            userInfo: true,
+
         }
     };
 

@@ -2,9 +2,9 @@ const { request } = require('urllib');
 
 // CONFIGURATION
 const DEVICE_CONFIG = {
-  ip: 'http://192.168.10.42', // Replace with your Device IP
+  ip: 'http://192.0.0.64', // Replace with your Device IP
   user: 'admin',
-  pass: 'YourDevicePassword'  // Replace with your password
+  pass: '!Palma12345678'  // Replace with your password
 };
 
 async function listEmployees() {
