@@ -72,6 +72,28 @@ async function updateEmployeeMap() {
   if (Object.keys(tempMap).length > 0) {
     employeeMap = tempMap;
     console.log(`✅ [Users] Finished! Synced a total of ${Object.keys(employeeMap).length} employees into memory.`);
+
+    // Export to JSON file
+    try {
+      fs.writeFileSync('users.json', JSON.stringify(employeeMap, null, 2));
+      console.log('[Users] Successfully exported to users.json');
+    } catch (err) {
+      console.error('[Users] Error writing to users.json:', err.message);
+    }
+
+    // Export to CSV file (Excel compatible)
+    try {
+      let csvContent = "Employee ID,Name\n";
+      for (const [empId, name] of Object.entries(employeeMap)) {
+        // Enclose name in quotes to handle any potential commas
+        const safeName = name.includes(',') ? `"${name}"` : name;
+        csvContent += `${empId},${safeName}\n`;
+      }
+      fs.writeFileSync('users.csv', csvContent);
+      console.log('[Users] Successfully exported to users.csv (Excel compatible)');
+    } catch (err) {
+      console.error('[Users] Error writing to users.csv:', err.message);
+    }
   } else {
     console.log("[Users] No employees found on the device.");
   }
