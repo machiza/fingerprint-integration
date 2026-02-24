@@ -1,4 +1,5 @@
 const { request } = require('urllib');
+const fs = require('fs');
 
 // CONFIGURATION
 const DEVICE_CONFIG = {
@@ -113,6 +114,14 @@ async function syncLogs() {
 
             console.log(`[Logs] Processed ${enrichedLogs.length} logs:`);
             console.log(enrichedLogs); // Verify the names are there!
+
+            // Export to JSON file
+            try {
+                fs.writeFileSync('logs.json', JSON.stringify(enrichedLogs, null, 2));
+                console.log('[Logs] Successfully exported to logs.json');
+            } catch (err) {
+                console.error('[Logs] Error writing to logs.json:', err.message);
+            }
 
             // TODO: Push enrichedLogs to AWS Lightsail
         }
