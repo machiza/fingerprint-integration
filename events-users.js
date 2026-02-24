@@ -13,20 +13,39 @@ let employeeMap = {};
 // 1. Function to Fetch and Memorize Users
 async function updateEmployeeMap() {
     const targetUrl = `${DEVICE_CONFIG.ip}/ISAPI/AccessControl/UserInfo/Search?format=json`;
-    const payload = { UserInfoSearchCond: { searchID: "1", searchResultPosition: 0, maxResults: 1000 } };
+
+    let position = 0;
+    const maxResults = 30; // Fetch in batches
+    let allUsers = [];
 
     try {
-        const { data, res } = await request(targetUrl, {
-            method: 'POST',
-            digestAuth: `${DEVICE_CONFIG.user}:${DEVICE_CONFIG.pass}`,
-            data: payload,
-            contentType: 'json', dataType: 'json', timeout: 10000
-        });
+        while (true) {
+            const payload = { UserInfoSearchCond: { searchID: "1", searchResultPosition: position, maxResults: maxResults } };
 
-        if (res.status === 200 && data.UserInfoSearch && data.UserInfoSearch.UserInfo) {
-            // Rebuild the map with the fresh data
+            const { data, res } = await request(targetUrl, {
+                method: 'POST',
+                digestAuth: `${DEVICE_CONFIG.user}:${DEVICE_CONFIG.pass}`,
+                data: payload,
+                contentType: 'json', dataType: 'json', timeout: 10000
+            });
+
+            if (res.status === 200 && data.UserInfoSearch && data.UserInfoSearch.UserInfo) {
+                const users = data.UserInfoSearch.UserInfo;
+                allUsers.push(...users);
+
+                if (users.length < maxResults) {
+                    break; // Final page
+                }
+                position += maxResults; // Prepare to fetch the next page
+            } else {
+                break;
+            }
+        }
+
+        // Rebuild the map with the fresh data
+        if (allUsers.length > 0) {
             employeeMap = {};
-            data.UserInfoSearch.UserInfo.forEach(user => {
+            allUsers.forEach(user => {
                 employeeMap[user.employeeNo] = user.name;
             });
             console.log(`[Users] Synced ${Object.keys(employeeMap).length} employees into memory.`);
@@ -44,27 +63,43 @@ async function syncLogs() {
     const todayClean = new Date(new Date().setHours(0, 0, 0, 0)).toISOString().split('.')[0] + '+00:00';
     const todayEnd = new Date(new Date().setHours(23, 59, 59, 999)).toISOString().split('.')[0] + '+00:00';
 
-    const payload = {
-        AcsEventCond: {
-            searchID: "1", searchResultPosition: 0, maxResults: 30, major: 0, minor: 0,
-            startTime: todayClean,
-            endTime: todayEnd
-        }
-    };
+    let position = 0;
+    const maxResults = 30; // Fetch in batches
+    let allLogs = [];
 
     try {
-        const { data, res } = await request(targetUrl, {
-            method: 'POST',
-            digestAuth: `${DEVICE_CONFIG.user}:${DEVICE_CONFIG.pass}`,
-            data: payload,
-            contentType: 'json', dataType: 'json', timeout: 10000
-        });
+        while (true) {
+            const payload = {
+                AcsEventCond: {
+                    searchID: "1", searchResultPosition: position, maxResults: maxResults, major: 5, minor: 38,
+                    startTime: todayClean,
+                    endTime: todayEnd
+                }
+            };
 
-        if (res.status === 200 && data.AcsEvent && data.AcsEvent.InfoList) {
-            const rawLogs = data.AcsEvent.InfoList;
+            const { data, res } = await request(targetUrl, {
+                method: 'POST',
+                digestAuth: `${DEVICE_CONFIG.user}:${DEVICE_CONFIG.pass}`,
+                data: payload,
+                contentType: 'json', dataType: 'json', timeout: 10000
+            });
 
+            if (res.status === 200 && data.AcsEvent && data.AcsEvent.InfoList) {
+                const rawLogs = data.AcsEvent.InfoList;
+                allLogs.push(...rawLogs);
+
+                if (rawLogs.length < maxResults) {
+                    break; // Final page
+                }
+                position += maxResults; // Prepare to fetch the next page
+            } else {
+                break;
+            }
+        }
+
+        if (allLogs.length > 0) {
             // Map the names to the logs!
-            const enrichedLogs = rawLogs.map(log => {
+            const enrichedLogs = allLogs.map(log => {
                 const empId = log.employeeNoString;
                 return {
                     id: empId,
@@ -80,7 +115,6 @@ async function syncLogs() {
             console.log(enrichedLogs); // Verify the names are there!
 
             // TODO: Push enrichedLogs to AWS Lightsail
-
         }
     } catch (error) {
         console.error("[Logs] Connection error:", error.message);
@@ -99,7 +133,7 @@ async function startAgent() {
     // setInterval(syncLogs, 10000);
 
     // Re-sync the employee list every 1 hour (in case you add new people)
-    setInterval(updateEmployeeMap, 3600000);
+    // setInterval(updateEmployeeMap, 3600000);
 }
 
 startAgent();
