@@ -12,7 +12,7 @@ const DEVICE_CONFIG = {
 let employeeMap = {};
 
 // 1. Function to Fetch and Memorize Users
-aasync function updateEmployeeMap() {
+async function updateEmployeeMap() {
   const targetUrl = `${DEVICE_CONFIG.ip}/ISAPI/AccessControl/UserInfo/Search?format=json`;
 
   let currentPosition = 0;
