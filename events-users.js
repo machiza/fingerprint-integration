@@ -228,6 +228,14 @@ async function syncLogs() {
     console.log(`✅ [Logs] Finished! Processed a total of ${enrichedLogs.length} logs for today.`);
     // console.log(enrichedLogs); // You can uncomment this if you want to see the massive list
 
+    // Export to JSON file
+    try {
+      fs.writeFileSync('logs.json', JSON.stringify(enrichedLogs, null, 2));
+      console.log('[Logs] Successfully exported to logs.json');
+    } catch (err) {
+      console.error('[Logs] Error writing to logs.json:', err.message);
+    }
+
     // TODO: Push enrichedLogs to AWS Lightsail
 
   } else {
