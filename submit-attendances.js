@@ -9,12 +9,12 @@ async function submitAttendances() {
 
     try {
         // 1. Read the enriched logs from logs.json
-        if (!fs.existsSync('logs.json')) {
+        if (!fs.existsSync('attendance_feb_2026.json')) {
             console.error('[Submit] logs.json not found! Please run the events-users.js sync first.');
             return;
         }
 
-        const rawData = fs.readFileSync('logs.json', 'utf8');
+        const rawData = fs.readFileSync('attendance_feb_2026.json', 'utf8');
         const logs = JSON.parse(rawData);
 
         if (logs.length === 0) {

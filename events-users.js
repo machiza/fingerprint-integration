@@ -1,6 +1,8 @@
 const { request } = require('urllib');
 const fs = require('fs');
 
+const API_URL = 'https://crbbbvzxhfxzlqcnygdz.supabase.co/functions/v1/fingerprint-webhook?key=20ae39aed8b84283c7740d91429e5d91736945b73a09b66c63704dce1d1b8639';
+
 // CONFIGURATION
 const DEVICE_CONFIG = {
   ip: 'http://192.168.10.42',
@@ -250,6 +252,10 @@ async function syncLogs() {
     console.log(`✅ [Logs] Finished! Processed a total of ${enrichedLogs.length} logs for today.`);
     // console.log(enrichedLogs); // You can uncomment this if you want to see the massive list
 
+    const payload = {
+      logs: enrichedLogs
+    };
+
     // Export to JSON file
     try {
       fs.writeFileSync('logs.json', JSON.stringify(enrichedLogs, null, 2));
@@ -258,7 +264,23 @@ async function syncLogs() {
       console.error('[Logs] Error writing to logs.json:', err.message);
     }
 
-    // TODO: Push enrichedLogs to AWS Lightsail
+    console.log(`[Submit] Sending POST request to ${API_URL}...`);
+    try {
+      const { data, res } = await request(API_URL, {
+        method: 'POST',
+        data: payload,
+        contentType: 'json',
+        dataType: 'json',
+        timeout: 10000
+      });
+
+      console.log(`[Submit] POST request to ${API_URL}...`);
+
+      // TODO: Push enrichedLogs to AWS Lightsail
+
+    } catch (error) {
+      console.error("[Submit] Connection error during sync:", error.message);
+    }
 
   } else {
     console.log("[Logs] No logs found for today.");
@@ -266,15 +288,34 @@ async function syncLogs() {
 }
 
 // 3. Main Loop
+async function runScheduledSync() {
+  console.log(`\n[Schedule] Running sync at ${new Date().toLocaleString()}`);
+  await updateEmployeeMap();
+  await syncLogs();
+}
+
 async function startAgent() {
-  console.log("Starting Local Bridge Agent...");
+  console.log("Starting Local Bridge Agent... Scheduled for 12:30 and 19:30");
 
   // Fetch users immediately on startup
   await updateEmployeeMap();
 
-  // Fetch logs immediately, then every 10 seconds
+  // Initial sync on startup
   syncLogs();
-  // setInterval(syncLogs, 10000);
+
+  // Check the time every second to see if we hit our scheduled times
+  setInterval(() => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    // Run at 12:30:00 and 23:59:59 local time
+    // if ((hours === 12 || hours === 23) && minutes === 59 && seconds === 59) {
+    if (hours === 23 && minutes === 59 && seconds === 59) {
+      runScheduledSync();
+    }
+  }, 1000);
 
   // Re-sync the employee list every 1 hour (in case you add new people)
   // setInterval(updateEmployeeMap, 3600000);
